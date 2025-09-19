@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happiness Survey</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .questions-panel {
+            flex: 2;
+            padding: 30px;
+            border-right: 2px solid #e0e0e0;
+        }
+        
+        .score-panel {
+            flex: 1;
+            padding: 30px;
+            background: linear-gradient(180deg, #f8f9ff 0%, #e8f0ff 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .question-item {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .question-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+        
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .answer-options {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .option {
+            flex: 1;
+            position: relative;
+        }
+        
+        .option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .option label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .option.happy label {
+            color: #4CAF50;
+            border-color: #4CAF50;
+        }
+        
+        .option.angry label {
+            color: #f44336;
+            border-color: #f44336;
+        }
+        
+        .option input[type="radio"]:checked + label.happy {
+            background: #4CAF50;
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .option input[type="radio"]:checked + label.angry {
+            background: #f44336;
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .score-display {
+            position: fixed;
+            top: 15em;
+            text-align: center;
+        }
+        
+        .score-number {
+            font-size: 6rem;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .score-label {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .score-percentage {
+            font-size: 1rem;
+            color: #888;
+            margin-top: 10px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #81C784);
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+        
+        .config-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+        
+        .config-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            resize: vertical;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s ease;
+        }
+        
+        button:hover {
+            background: #5a67d8;
+        }
+        
+        .emoji {
+            font-size: 2rem;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <div class="header">
+                <h1>Happiness Survey</h1>
+                <p>Answer the questions below and see your happiness score!</p>
+            </div>
+            
+            <div class="main-content">
+                <div class="questions-panel">
+                    <div class="config-section">
+                        <h3>Configuration (JSON)</h3>
+                        <textarea v-model="configText" placeholder="Enter your questions JSON here..."></textarea>
+                        <button @click="loadInput">Load Questions</button>
+                        <button @click="loadSlovakQuestions">Load Slovak Questions</button>
+                    </div>
+                    
+                    <div v-if="questions.length > 0">
+                        <h2 style="margin-bottom: 20px; color: #333;">Questions</h2>
+                        <div v-for="(question, index) in questions" :key="index" class="question-item">
+                            <div class="question-text">{{ question.text }}</div>
+                            <div class="answer-options">
+                                <div class="option happy">
+                                    <input 
+                                        type="radio" 
+                                        :id="'happy-' + index" 
+                                        :name="'question-' + index" 
+                                        value="HAPPY"
+                                        v-model="answers[index]"
+                                    >
+                                    <label :for="'happy-' + index" class="happy">
+                                        😊 HAPPY
+                                    </label>
+                                </div>
+                                <div class="option angry">
+                                    <input 
+                                        type="radio" 
+                                        :id="'angry-' + index" 
+                                        :name="'question-' + index" 
+                                        value="ANGRY"
+                                        v-model="answers[index]"
+                                    >
+                                    <label :for="'angry-' + index" class="angry">
+                                        😠 ANGRY
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="score-panel">
+                    <div class="score-display">
+                        <div class="score-label">Happiness Score</div>
+                        <div class="score-number">{{ happinessScore }}</div>
+                        <div class="emoji">{{ getScoreEmoji() }}</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" :style="{width: happinessPercentage + '%'}"></div>
+                        </div>
+                        <div class="score-percentage">{{ happinessPercentage }}% Happy</div>
+                        <div class="score-percentage">{{ questions.length - happyCount }} / {{ questions.length }} questions answered</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    configText: `{
+    "questions": [
+        {"text": "Ste spokojni s pocasim v dnesnom dni?"}
+    ]
+}`,
+                    slovakText: `{
+  "questions": [
+    {"text": "Ste spokojní s návratom Roberta Fica na post predsedu vlády po voľbách v septembri 2023?"},
+    {"text": "Podporujete reformu trestného zákonníka, ktorá znižuje maximálne tresty za korupciu z 25 na 20 rokov?"},
+    {"text": "Súhlasíte so zrušením RTVS k 1. júlu 2024 a jej nahradením štátom kontrolovanou STVR?"},
+    {"text": "Podporujete odvolanie špeciálneho prokurátora Daniela Lipšica v decembri 2023?"},
+    {"text": "Ste spokojní s odvolaním troch členov Súdnej rady SR v roku 2023 (Sabová, Kafka, Machová)?"},
+    {"text": "Súhlasíte so zrušením Úradu špeciálnej prokuratúry a presunom kompetencií na Generálnu prokuratúru?"},
+    {"text": "Podporujete navrhované ústavné zmeny, ktoré by umožnili parlamentu odvolávať ústavných sudcov?"},
+    {"text": "Ste spokojní so zvýšením zdravotného poistenia zamestnancov z 0% na 4% od januára 2024?"},
+    {"text": "Súhlasíte so zvýšením zdravotného poistenia zamestnávateľov z 10% na 11% od januára 2024?"},
+    {"text": "Podporujete zvýšenie dane z dividendov z 7% na 10% od januára 2024?"},
+    {"text": "Ste spokojní so zavedením minimálnej dane 3% pre domáce spoločnosti od roku 2024?"},
+    {"text": "Súhlasíte so zvýšením dane z tabaku a cukru od roku 2024?"},
+    {"text": "Podporujete zníženie maximálnych poplatkov správcovských spoločností druhého piliera na 1,05% v roku 2024?"},
+    {"text": "Ste spokojní so zvýšením dôchodkov o 10,6% od júla 2023 (priemerný dôchodok z 576€ na 637€)?"},
+    {"text": "Súhlasíte so zavedením automatického zvyšovania dôchodkov pri 5% inflácii od roku 2024?"},
+    {"text": "Podporujete zdanenie výberu úspor z druhého piliera osobnou daňou z príjmov?"},
+    {"text": "Ste spokojní s rozhodnutím vlády prerušiť dodávky zbraní na Ukrajinu od októbra 2023?"},
+    {"text": "Súhlasíte s pokračovaním humanitárnej pomoci Ukrajine namiesto vojenskej od roku 2024?"},
+    {"text": "Podporujete zachovanie sankcií voči Rusku napriek kritike premiéra Fica?"},
+    {"text": "Ste spokojní s podporou farmárov pri prechode na klimaticky šetrné praktiky (výsadba živých plotov, pestovanie strukovín)?"},
+    {"text": "Súhlasíte s finančnou podporou zalesňovania a obnovy lesov v rámci Green Deal?"},
+    {"text": "Podporujete udržanie poľnohospodárstva a údržbu rašelinísk ako súčasť environmentálnej politiky?"},
+    {"text": "Ste spokojní s revíziou Plánu obnovy a odolnosti s pridaním kapitoly REPowerEU v apríli 2023?"},
+    {"text": "Súhlasíte s návrhom aktualizovaného národného energetického a klimatického plánu predloženým v auguste 2023?"},
+    {"text": "Podporujete cieľ Slovenskej republiky dosiahnuť klimatickú neutralitu do roku 2050?"},
+    {"text": "Ste spokojní so stratégiou environmentálnej politiky 'Zelenšie Slovensko 2030'?"},
+    {"text": "Súhlasíte s využívaním sektora LULUCF (využívanie pôdy, zmeny vo využívaní pôdy a lesníctvo) ako významného pohlcovača uhlíka?"},
+    {"text": "Podporujete pokles inflácie z 12,8% v roku 2022 na 10,7% v roku 2023 ako výsledek vládnej politiky?"},
+    {"text": "Ste spokojní s očakávaným poklesom inflácie na 3,2% v roku 2024?"},
+    {"text": "Súhlasíte s vládnym prístupom k riešeniu energetickej krízy od roku 2023?"},
+    {"text": "Podporujete zvýšené volebné kaucie, ktoré sťažujú menším stranám účasť vo voľbách?"},
+    {"text": "Ste spokojní s polarizačným jazykom premiéra Fica voči opozícii a médiám?"},
+    {"text": "Súhlasíte s kritikou Európskeho parlamentu ohľadom stavu demokracie na Slovensku?"},
+    {"text": "Podporujete vládnu reakciu na výzvy Európskej komisie ohľadom právneho štátu?"},
+    {"text": "Ste spokojní s prepustením vyše 100 policajtov z antikorupčných oddelení od októbra 2023?"},
+    {"text": "Súhlasíte s reorganizáciou polície a zrušením špecializovaných jednotiek NAKA?"},
+    {"text": "Podporujete zmenu vedenia polície a vymenovanie nového policajného prezidenta v roku 2024?"},
+    {"text": "Ste spokojní s novým zákonom o verejných zhromaždeniach schváleným v roku 2024?"},
+    {"text": "Súhlasíte s obmedzením práv občianskych aktivistov a neziskových organizácií?"},
+    {"text": "Podporujete zníženie financovania kultúry a umenia v rozpočte na rok 2024?"}
+  ]
+}`,
+                    questions: [],
+                    answers: []
+                }
+            },
+            computed: {
+                happyCount() {
+                    return this.answers.filter(answer => answer === 'HAPPY').length;
+                },
+                happinessPercentage() {
+                    if (this.questions.length === 0) return 0;
+                    return Math.round((this.happyCount / this.questions.length) * 100);
+                },
+                happinessScore() {
+                    if (this.questions.length === 0) return 1;
+                    const percentage = this.happinessPercentage;
+                    if (percentage === 0) return 5;
+                    if (percentage <= 20) return 5;
+                    if (percentage <= 40) return 4;
+                    if (percentage <= 60) return 3;
+                    if (percentage <= 80) return 2;
+                    return 1;
+                }
+            },
+            methods: {
+                loadConfig(text) {
+                    try {
+                        const config = JSON.parse(text);
+                        if (config.questions && Array.isArray(config.questions)) {
+                            this.questions = config.questions;
+                            // Initialize all answers as ANGRY by default
+                            this.answers = new Array(this.questions.length).fill('ANGRY');
+                        } else {
+                            alert('Invalid JSON format. Please ensure your JSON has a "questions" array.');
+                        }
+                    } catch (error) {
+                        alert('Invalid JSON format. Please check your syntax.');
+                    }
+                },
+                loadInput() {
+                    this.loadConfig(this.configText);
+                },
+                loadSlovakQuestions() {
+                    // Load the Slovak political questions directly
+                    this.loadConfig(this.slovakText);
+                },
+                getScoreEmoji() {
+                    switch(this.happinessScore) {
+                        case 5: return '😢';
+                        case 4: return '😕';
+                        case 3: return '😐';
+                        case 2: return '😊';
+                        case 1: return '😄';
+                        default: return '😐';
+                    }
+                }
+            },
+            mounted() {
+                // Load default configuration on startup
+                this.loadConfig(this.configText);
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
